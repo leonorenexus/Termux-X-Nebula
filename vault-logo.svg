@@ -1,0 +1,60 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#1a0f3a"/>
+      <stop offset="55%" stop-color="#0b0a1a"/>
+      <stop offset="100%" stop-color="#05040d"/>
+    </radialGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="55%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#ff2fb2"/>
+    </linearGradient>
+    <linearGradient id="vGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7ef6ff"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="url(#bgGlow)"/>
+
+  <!-- scattered nebula particles -->
+  <g opacity="0.8">
+    <circle cx="90" cy="120" r="3" fill="#22d3ee"/>
+    <circle cx="430" cy="90" r="2.5" fill="#ff2fb2"/>
+    <circle cx="70" cy="400" r="2" fill="#7c3aed"/>
+    <circle cx="450" cy="410" r="3" fill="#22d3ee"/>
+    <circle cx="60" cy="250" r="2" fill="#ff2fb2"/>
+    <circle cx="440" cy="260" r="2.5" fill="#7c3aed"/>
+    <circle cx="256" cy="60" r="2" fill="#22d3ee"/>
+    <circle cx="256" cy="452" r="2" fill="#ff2fb2"/>
+  </g>
+
+  <!-- outer hex ring -->
+  <polygon points="256,70 400,150 400,320 256,400 112,320 112,150"
+           fill="none" stroke="url(#ringGrad)" stroke-width="5" opacity="0.55" filter="url(#glow)"/>
+
+  <!-- inner rotated diamond frame -->
+  <rect x="176" y="176" width="160" height="160" rx="18"
+        transform="rotate(45 256 256)"
+        fill="none" stroke="url(#ringGrad)" stroke-width="4" opacity="0.85"/>
+
+  <!-- lock shackle -->
+  <path d="M 216 232 L 216 200 A 40 40 0 0 1 296 200 L 296 232"
+        fill="none" stroke="url(#vGrad)" stroke-width="14" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- lock body / V monogram -->
+  <rect x="196" y="228" width="120" height="96" rx="16" fill="#05040d" stroke="url(#ringGrad)" stroke-width="4"/>
+  <path d="M 214 244 L 256 312 L 298 244" fill="none" stroke="url(#vGrad)" stroke-width="12"
+        stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+  <!-- keyhole dot -->
+  <circle cx="256" cy="276" r="6" fill="#ff2fb2" filter="url(#glow)"/>
+</svg>
