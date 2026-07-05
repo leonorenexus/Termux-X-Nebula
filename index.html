@@ -53,6 +53,13 @@
     font-size:15px; color:var(--text);
   }
   .brand small{ display:block; font-size:9px; letter-spacing:2px; color:var(--muted); margin-top:2px;}
+  #mainNav{ display:flex; gap:6px; }
+  .nav-tab{
+    background:none; border:1px solid var(--line); color:var(--muted);
+    padding:6px 16px; border-radius:6px; font-family:'JetBrains Mono'; font-size:11px;
+    letter-spacing:1.5px; cursor:pointer; transition:.2s;
+  }
+  .nav-tab.active{ border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 10px rgba(34,211,238,0.15); }
   #userBadge{ font-size:11px; color:var(--muted); display:flex; align-items:center; gap:10px; }
   #logoutBtn{
     background:none; border:1px solid var(--line); color:var(--muted);
@@ -116,6 +123,36 @@
     border:none; color:#05040d; font-weight:700; padding:0 18px; border-radius:8px;
     font-family:'JetBrains Mono'; font-size:13px; cursor:pointer; white-space:nowrap;
   }
+  .btn-io{
+    background:none; border:1px solid var(--line); color:var(--muted);
+    padding:0 16px; border-radius:8px; font-family:'JetBrains Mono'; font-size:12px;
+    cursor:pointer; white-space:nowrap; transition:.2s;
+  }
+  .btn-io:hover{ border-color:var(--violet); color:var(--violet); }
+
+  /* ---------- About screen ---------- */
+  #aboutScreen{ display:none; padding:20px; max-width:720px; margin:0 auto; width:100%; }
+  .about-card{
+    background:var(--glass); border:1px solid var(--line); border-radius:14px;
+    padding:26px; backdrop-filter: blur(12px); margin-bottom:16px;
+  }
+  .about-card h2{
+    font-family:'Orbitron'; font-size:15px; letter-spacing:2px; color:var(--cyan); margin-bottom:14px;
+  }
+  .about-card p{ font-size:13px; line-height:1.8; color:var(--text); margin-bottom:12px; }
+  .about-card p:last-child{ margin-bottom:0; }
+  .crew-list{ display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .crew-item{
+    display:flex; align-items:center; gap:12px; padding:10px 14px;
+    background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:8px;
+  }
+  .crew-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .crew-name{ font-size:13px; font-weight:600; color:var(--text); }
+  .crew-role{ font-size:11px; color:var(--muted); margin-left:auto; }
+  footer#appFooter{
+    text-align:center; padding:26px 20px 34px; font-size:11px; color:var(--muted); line-height:1.8;
+  }
+  footer#appFooter .founder{ color:var(--cyan); font-weight:600; }
   .cat-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
   .cat-chip{
     padding:6px 13px; border-radius:20px; font-size:11px; letter-spacing:0.5px;
@@ -193,9 +230,13 @@
       <div class="dot"></div>
       <div>
         <span>VAULT</span>
-        <small>TERMUX SNIPPET STORAGE</small>
+        <small>TERMUX SNIPPET STORAGE // v2</small>
       </div>
     </div>
+    <nav id="mainNav" style="display:none;">
+      <button class="nav-tab active" data-view="vault">VAULT</button>
+      <button class="nav-tab" data-view="about">ABOUT</button>
+    </nav>
     <div id="userBadge" style="display:none;">
       <span id="userEmail"></span>
       <button id="logoutBtn">LOGOUT</button>
@@ -227,6 +268,9 @@
   <div id="vaultScreen">
     <div class="toolbar">
       <input type="text" id="searchInput" placeholder="cari command, judul, atau tag...">
+      <button class="btn-io" id="exportBtn">EXPORT</button>
+      <button class="btn-io" id="importBtn">IMPORT</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
       <button class="btn-add" id="openAddBtn">+ SNIPPET</button>
     </div>
     <div class="cat-row" id="catRow">
@@ -238,7 +282,57 @@
       <p>Belum ada snippet tersimpan. Tap "+ SNIPPET" buat nambahin command pertama lu.</p>
     </div>
   </div>
+
+  <!-- ABOUT SCREEN -->
+  <div id="aboutScreen">
+    <div class="about-card">
+      <h2>// KISAH LEONORE TECH TEAM</h2>
+      <p>Leonore Tech Team lahir bukan dari kantor ber-AC atau rapat berjam-jam, tapi dari satu HP, sinyal yang naik-turun, dan keras kepala buat tetep ngoding walau gak ada PC. Setiap crash, setiap build gagal di GitHub Actions, setiap malam begadang benerin satu baris kode — itu semua fondasi dari apa yang sekarang jadi VAULT.</p>
+      <p>Nama "Leonore" dipake di setiap project sebagai penanda: kalau ada tulisan itu di suatu tempat, artinya dibangun dengan cara yang sama — dari nol, dari mobile, tanpa jalan pintas.</p>
+    </div>
+    <div class="about-card">
+      <h2>// THE CREW</h2>
+      <p>Setiap nama di bawah ini pegang perannya sendiri dalam menjaga sistem tetap hidup.</p>
+      <div class="crew-list">
+        <div class="crew-item">
+          <div class="crew-dot" style="background:var(--cyan); box-shadow:0 0 8px var(--cyan);"></div>
+          <span class="crew-name">Pai Leonore</span>
+          <span class="crew-role">Founder / Architect</span>
+        </div>
+        <div class="crew-item">
+          <div class="crew-dot" style="background:var(--violet); box-shadow:0 0 8px var(--violet);"></div>
+          <span class="crew-name">Renn Leonore</span>
+          <span class="crew-role">Systems</span>
+        </div>
+        <div class="crew-item">
+          <div class="crew-dot" style="background:var(--magenta); box-shadow:0 0 8px var(--magenta);"></div>
+          <span class="crew-name">Raa Leonore</span>
+          <span class="crew-role">Interface</span>
+        </div>
+        <div class="crew-item">
+          <div class="crew-dot" style="background:#8b87a8; box-shadow:0 0 8px #8b87a8;"></div>
+          <span class="crew-name">Void Leonore</span>
+          <span class="crew-role">Infrastructure</span>
+        </div>
+        <div class="crew-item">
+          <div class="crew-dot" style="background:var(--cyan); box-shadow:0 0 8px var(--cyan);"></div>
+          <span class="crew-name">Leora Leonore</span>
+          <span class="crew-role">Design</span>
+        </div>
+        <div class="crew-item">
+          <div class="crew-dot" style="background:var(--magenta); box-shadow:0 0 8px var(--magenta);"></div>
+          <span class="crew-name">Daemon Leonore</span>
+          <span class="crew-role">Background Processes</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<footer id="appFooter">
+  ⚡ VAULT — built by <span class="founder">Pai Leonore</span> & Leonore Tech Team<br>
+  Renn · Raa · Void · Leora · Daemon
+</footer>
 
 <!-- ADD/EDIT MODAL -->
 <div class="modal-overlay" id="modalOverlay">
@@ -407,9 +501,21 @@ function onLogin(user){
   authScreen.style.display = 'none';
   vaultScreen.style.display = 'block';
   userBadge.style.display = 'flex';
+  document.getElementById('mainNav').style.display = 'flex';
   userEmail.textContent = user.email;
   loadSnippets();
 }
+
+/* Nav tab switching */
+document.querySelectorAll('.nav-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const view = tab.dataset.view;
+    document.getElementById('vaultScreen').style.display = view==='vault' ? 'block' : 'none';
+    document.getElementById('aboutScreen').style.display = view==='about' ? 'block' : 'none';
+  });
+});
 
 checkSession();
 
@@ -546,6 +652,65 @@ async function deleteSnippet(id){
   await sb.from('snippets').delete().eq('id', id);
   loadSnippets();
 }
+
+/* ============================================================
+   5. EXPORT / IMPORT
+   ============================================================ */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  if(allSnippets.length === 0){ alert('Vault masih kosong, gak ada yang bisa di-export.'); return; }
+  const exportData = allSnippets.map(s=>({
+    title: s.title,
+    command: s.command,
+    description: s.description || '',
+    category: s.category || 'uncategorized'
+  }));
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vault-export-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const items = JSON.parse(text);
+    if(!Array.isArray(items)) throw new Error('Format file gak sesuai (harus array JSON).');
+
+    const { data: sessionData } = await sb.auth.getSession();
+    const user_id = sessionData.session.user.id;
+
+    const rows = items
+      .filter(it => it.title && it.command)
+      .map(it => ({
+        title: it.title,
+        command: it.command,
+        description: it.description || '',
+        category: it.category || 'uncategorized',
+        user_id
+      }));
+
+    if(rows.length === 0){ alert('Gak ada snippet valid di file ini.'); return; }
+
+    const { error } = await sb.from('snippets').insert(rows);
+    if(error){ alert('Gagal import: ' + error.message); return; }
+
+    alert(`Berhasil import ${rows.length} snippet.`);
+    loadSnippets();
+  } catch(err){
+    alert('Gagal baca file: ' + err.message);
+  } finally {
+    e.target.value = '';
+  }
+});
 </script>
 </body>
 </html>
