@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>VAULT :: Termux Snippet Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #05040d;
+    --bg-soft: #0b0a1a;
+    --violet: #7c3aed;
+    --magenta: #ff2fb2;
+    --cyan: #22d3ee;
+    --text: #e8e6f5;
+    --muted: #8b87a8;
+    --line: rgba(139,135,168,0.18);
+    --glass: rgba(18,16,36,0.55);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+  #nebula-canvas{
+    position:fixed; inset:0; width:100%; height:100%; z-index:0;
+  }
+  @media (prefers-reduced-motion: reduce){
+    #nebula-canvas{ display:none; }
+    body{ background: radial-gradient(ellipse at 30% 20%, #1a0f3a 0%, #05040d 60%); }
+  }
+
+  .app{ position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
+
+  /* ---------- Top bar ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 20px; border-bottom:1px solid var(--line);
+    backdrop-filter: blur(6px);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .dot{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--cyan); box-shadow:0 0 10px var(--cyan), 0 0 20px var(--cyan);
+  }
+  .brand span{
+    font-family:'Orbitron', sans-serif; font-weight:700; letter-spacing:3px;
+    font-size:15px; color:var(--text);
+  }
+  .brand small{ display:block; font-size:9px; letter-spacing:2px; color:var(--muted); margin-top:2px;}
+  #userBadge{ font-size:11px; color:var(--muted); display:flex; align-items:center; gap:10px; }
+  #logoutBtn{
+    background:none; border:1px solid var(--line); color:var(--muted);
+    padding:6px 12px; border-radius:6px; font-family:inherit; font-size:11px; cursor:pointer;
+    transition:.2s;
+  }
+  #logoutBtn:hover{ border-color:var(--magenta); color:var(--magenta); }
+
+  /* ---------- Auth screen ---------- */
+  #authScreen{
+    flex:1; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .auth-card{
+    width:100%; max-width:360px;
+    background:var(--glass);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:32px 28px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 0 0 1px rgba(124,58,237,0.08), 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .auth-card h1{
+    font-family:'Orbitron', sans-serif; font-size:20px; letter-spacing:3px;
+    margin-bottom:6px; color:var(--text);
+  }
+  .auth-card p.sub{ color:var(--muted); font-size:11px; margin-bottom:24px; letter-spacing:0.5px;}
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:10px; color:var(--muted); letter-spacing:1.5px; margin-bottom:6px; text-transform:uppercase;}
+  .field input{
+    width:100%; background:rgba(0,0,0,0.35); border:1px solid var(--line);
+    color:var(--text); padding:11px 12px; border-radius:8px; font-family:inherit; font-size:13px;
+    outline:none; transition:.2s;
+  }
+  .field input:focus{ border-color:var(--cyan); box-shadow:0 0 0 3px rgba(34,211,238,0.12); }
+  .btn-primary{
+    width:100%; padding:12px; border-radius:8px; border:none; cursor:pointer;
+    background:linear-gradient(90deg, var(--violet), var(--magenta));
+    color:white; font-family:'JetBrains Mono'; font-weight:600; font-size:13px; letter-spacing:1px;
+    margin-top:6px; transition:.2s;
+  }
+  .btn-primary:hover{ filter:brightness(1.15); }
+  .btn-primary:disabled{ opacity:0.5; cursor:not-allowed; }
+  .auth-toggle{
+    text-align:center; margin-top:18px; font-size:11px; color:var(--muted);
+  }
+  .auth-toggle a{ color:var(--cyan); cursor:pointer; text-decoration:none; }
+  #authMsg{ font-size:11px; margin-top:12px; text-align:center; min-height:14px; }
+  #authMsg.err{ color:var(--magenta); }
+  #authMsg.ok{ color:var(--cyan); }
+
+  /* ---------- Vault screen ---------- */
+  #vaultScreen{ flex:1; display:none; padding:20px; max-width:1000px; margin:0 auto; width:100%; }
+  .toolbar{ display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+  .toolbar input[type="text"]{
+    flex:1; min-width:180px; background:var(--glass); border:1px solid var(--line);
+    color:var(--text); padding:11px 14px; border-radius:8px; font-family:inherit; font-size:13px; outline:none;
+  }
+  .toolbar input:focus{ border-color:var(--cyan); }
+  .btn-add{
+    background:linear-gradient(90deg, var(--cyan), var(--violet));
+    border:none; color:#05040d; font-weight:700; padding:0 18px; border-radius:8px;
+    font-family:'JetBrains Mono'; font-size:13px; cursor:pointer; white-space:nowrap;
+  }
+  .cat-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+  .cat-chip{
+    padding:6px 13px; border-radius:20px; font-size:11px; letter-spacing:0.5px;
+    border:1px solid var(--line); color:var(--muted); cursor:pointer; transition:.2s; background:transparent;
+  }
+  .cat-chip.active{ border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 12px rgba(34,211,238,0.15); }
+
+  #grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:14px; }
+  .snip-card{
+    background:var(--glass); border:1px solid var(--line); border-radius:12px; padding:16px;
+    backdrop-filter: blur(10px); position:relative; transition:.2s;
+  }
+  .snip-card:hover{ border-color:rgba(124,58,237,0.5); }
+  .snip-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+  .snip-title{ font-size:14px; font-weight:600; color:var(--text); }
+  .snip-tag{
+    font-size:9px; padding:3px 8px; border-radius:10px; letter-spacing:1px; text-transform:uppercase;
+    background:rgba(124,58,237,0.15); color:var(--violet); border:1px solid rgba(124,58,237,0.3);
+    white-space:nowrap;
+  }
+  .snip-cmd{
+    background:rgba(0,0,0,0.4); border-radius:6px; padding:10px 12px; font-size:12px;
+    color:var(--cyan); overflow-x:auto; white-space:pre; margin:8px 0; border:1px solid var(--line);
+  }
+  .snip-desc{ font-size:11.5px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
+  .snip-actions{ display:flex; gap:8px; }
+  .snip-actions button{
+    flex:1; background:none; border:1px solid var(--line); color:var(--muted);
+    padding:7px; border-radius:6px; font-family:inherit; font-size:11px; cursor:pointer; transition:.2s;
+  }
+  .snip-actions button.copy:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .snip-actions button.edit:hover{ border-color:var(--violet); color:var(--violet); }
+  .snip-actions button.del:hover{ border-color:var(--magenta); color:var(--magenta); }
+
+  #emptyState{ text-align:center; padding:60px 20px; color:var(--muted); }
+  #emptyState h3{ font-family:'Orbitron'; font-size:14px; letter-spacing:2px; color:var(--text); margin-bottom:8px;}
+  #emptyState p{ font-size:12px; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal{
+    background:#0b0a1a; border:1px solid var(--line); border-radius:14px; padding:26px;
+    width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.6);
+  }
+  .modal h2{ font-family:'Orbitron'; font-size:15px; letter-spacing:2px; margin-bottom:18px; }
+  .modal textarea{
+    width:100%; background:rgba(0,0,0,0.35); border:1px solid var(--line); color:var(--cyan);
+    padding:11px 12px; border-radius:8px; font-family:'JetBrains Mono'; font-size:12.5px;
+    outline:none; resize:vertical; min-height:70px;
+  }
+  .modal textarea:focus, .modal select:focus{ border-color:var(--cyan); }
+  .modal select{
+    width:100%; background:rgba(0,0,0,0.35); border:1px solid var(--line); color:var(--text);
+    padding:10px 12px; border-radius:8px; font-family:inherit; font-size:13px; outline:none;
+  }
+  .modal-actions{ display:flex; gap:10px; margin-top:20px; }
+  .modal-actions button{ flex:1; padding:11px; border-radius:8px; font-family:inherit; font-size:12px; cursor:pointer; }
+  .modal-actions .cancel{ background:none; border:1px solid var(--line); color:var(--muted); }
+  .modal-actions .save{ background:linear-gradient(90deg, var(--violet), var(--magenta)); border:none; color:white; font-weight:600; }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<canvas id="nebula-canvas"></canvas>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <span>VAULT</span>
+        <small>TERMUX SNIPPET STORAGE</small>
+      </div>
+    </div>
+    <div id="userBadge" style="display:none;">
+      <span id="userEmail"></span>
+      <button id="logoutBtn">LOGOUT</button>
+    </div>
+  </header>
+
+  <!-- AUTH SCREEN -->
+  <div id="authScreen">
+    <div class="auth-card">
+      <h1 id="authTitle">SIGN IN</h1>
+      <p class="sub">// akses brankas command lu</p>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@domain.com" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="authSubmit">MASUK</button>
+      <div id="authMsg"></div>
+      <div class="auth-toggle">
+        <span id="authToggleText">Belum punya akun? <a id="toRegister">Daftar</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- VAULT SCREEN -->
+  <div id="vaultScreen">
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="cari command, judul, atau tag...">
+      <button class="btn-add" id="openAddBtn">+ SNIPPET</button>
+    </div>
+    <div class="cat-row" id="catRow">
+      <button class="cat-chip active" data-cat="all">ALL</button>
+    </div>
+    <div id="grid"></div>
+    <div id="emptyState" style="display:none;">
+      <h3>VAULT KOSONG</h3>
+      <p>Belum ada snippet tersimpan. Tap "+ SNIPPET" buat nambahin command pertama lu.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">SNIPPET BARU</h2>
+    <div class="field">
+      <label>Judul</label>
+      <input type="text" id="fTitle" placeholder="misal: Fix Kotlin docstring conflict">
+    </div>
+    <div class="field">
+      <label>Command / Script</label>
+      <textarea id="fCommand" placeholder="pkg install ..."></textarea>
+    </div>
+    <div class="field">
+      <label>Deskripsi (opsional)</label>
+      <textarea id="fDesc" placeholder="kapan/kenapa command ini dipake" style="min-height:50px;"></textarea>
+    </div>
+    <div class="field">
+      <label>Kategori</label>
+      <input type="text" id="fCategory" placeholder="misal: Proot Setup, Build Fix, Kali Config">
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" id="cancelModal">BATAL</button>
+      <button class="save" id="saveModal">SIMPAN</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============================================================
+   1. KONFIGURASI SUPABASE — ISI DENGAN PROJECT LU SENDIRI
+   Ambil dari: Supabase Dashboard > Project Settings > API
+   ============================================================ */
+const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============================================================
+   2. NEBULA BACKGROUND (Three.js particle field)
+   ============================================================ */
+(function initNebula(){
+  const canvas = document.getElementById('nebula-canvas');
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const script = document.createElement('script');
+  script.src = "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js";
+  script.onload = () => {
+    const THREE = window.THREE;
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.z = 60;
+
+    // particle field
+    const count = 1800;
+    const positions = new Float32Array(count*3);
+    const colors = new Float32Array(count*3);
+    const palette = [[0.486,0.231,0.929],[1,0.184,0.698],[0.133,0.827,0.933]]; // violet, magenta, cyan
+
+    for(let i=0;i<count;i++){
+      positions[i*3] = (Math.random()-0.5)*200;
+      positions[i*3+1] = (Math.random()-0.5)*200;
+      positions[i*3+2] = (Math.random()-0.5)*200;
+      const c = palette[Math.floor(Math.random()*palette.length)];
+      colors[i*3]=c[0]; colors[i*3+1]=c[1]; colors[i*3+2]=c[2];
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors,3));
+    const mat = new THREE.PointsMaterial({ size:0.7, vertexColors:true, transparent:true, opacity:0.75 });
+    const points = new THREE.Points(geo, mat);
+    scene.add(points);
+
+    let mouseX=0, mouseY=0;
+    window.addEventListener('mousemove', e=>{
+      mouseX = (e.clientX/window.innerWidth - 0.5);
+      mouseY = (e.clientY/window.innerHeight - 0.5);
+    });
+
+    function animate(){
+      requestAnimationFrame(animate);
+      points.rotation.y += 0.0006;
+      points.rotation.x += 0.0002;
+      camera.position.x += (mouseX*8 - camera.position.x)*0.02;
+      camera.position.y += (-mouseY*8 - camera.position.y)*0.02;
+      camera.lookAt(scene.position);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', ()=>{
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  };
+  document.head.appendChild(script);
+})();
+
+/* ============================================================
+   3. AUTH LOGIC
+   ============================================================ */
+let isRegisterMode = false;
+const authScreen = document.getElementById('authScreen');
+const vaultScreen = document.getElementById('vaultScreen');
+const userBadge = document.getElementById('userBadge');
+const userEmail = document.getElementById('userEmail');
+const authMsg = document.getElementById('authMsg');
+const authTitle = document.getElementById('authTitle');
+const authToggleText = document.getElementById('authToggleText');
+
+document.getElementById('toRegister').addEventListener('click', ()=>{
+  isRegisterMode = !isRegisterMode;
+  authTitle.textContent = isRegisterMode ? "DAFTAR" : "SIGN IN";
+  document.getElementById('authSubmit').textContent = isRegisterMode ? "DAFTAR" : "MASUK";
+  authToggleText.innerHTML = isRegisterMode
+    ? 'Udah punya akun? <a id="toRegister2" style="color:var(--cyan);cursor:pointer;">Masuk</a>'
+    : 'Belum punya akun? <a id="toRegister2" style="color:var(--cyan);cursor:pointer;">Daftar</a>';
+  document.getElementById('toRegister2').addEventListener('click', ()=>document.getElementById('toRegister').click());
+});
+
+document.getElementById('authSubmit').addEventListener('click', async ()=>{
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const btn = document.getElementById('authSubmit');
+  authMsg.className=''; authMsg.textContent='';
+  if(!email || !password){ authMsg.textContent="Isi email & password dulu."; authMsg.className='err'; return; }
+  btn.disabled = true; btn.textContent = "PROCESSING...";
+
+  let result;
+  if(isRegisterMode){
+    result = await sb.auth.signUp({ email, password });
+  } else {
+    result = await sb.auth.signInWithPassword({ email, password });
+  }
+  btn.disabled = false;
+  btn.textContent = isRegisterMode ? "DAFTAR" : "MASUK";
+
+  if(result.error){
+    authMsg.textContent = result.error.message;
+    authMsg.className = 'err';
+  } else if(isRegisterMode){
+    authMsg.textContent = "Akun dibuat. Cek email buat verifikasi (kalau diaktifkan), atau langsung masuk.";
+    authMsg.className = 'ok';
+  } else {
+    onLogin(result.data.user);
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+  await sb.auth.signOut();
+  location.reload();
+});
+
+async function checkSession(){
+  const { data } = await sb.auth.getSession();
+  if(data.session){ onLogin(data.session.user); }
+}
+
+function onLogin(user){
+  authScreen.style.display = 'none';
+  vaultScreen.style.display = 'block';
+  userBadge.style.display = 'flex';
+  userEmail.textContent = user.email;
+  loadSnippets();
+}
+
+checkSession();
+
+/* ============================================================
+   4. VAULT CRUD LOGIC
+   ============================================================ */
+let allSnippets = [];
+let activeCategory = 'all';
+let editingId = null;
+
+async function loadSnippets(){
+  const { data, error } = await sb.from('snippets').select('*').order('created_at', {ascending:false});
+  if(error){ console.error(error); return; }
+  allSnippets = data || [];
+  renderCategories();
+  renderGrid();
+}
+
+function renderCategories(){
+  const cats = ['all', ...new Set(allSnippets.map(s=>s.category).filter(Boolean))];
+  const row = document.getElementById('catRow');
+  row.innerHTML = cats.map(c=>
+    `<button class="cat-chip ${c===activeCategory?'active':''}" data-cat="${c}">${c.toUpperCase()}</button>`
+  ).join('');
+  row.querySelectorAll('.cat-chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeCategory = btn.dataset.cat;
+      renderCategories();
+      renderGrid();
+    });
+  });
+}
+
+function renderGrid(){
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = allSnippets.filter(s=>{
+    const matchCat = activeCategory==='all' || s.category===activeCategory;
+    const matchSearch = !search ||
+      s.title.toLowerCase().includes(search) ||
+      s.command.toLowerCase().includes(search) ||
+      (s.category||'').toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('emptyState');
+  if(filtered.length===0){
+    grid.innerHTML=''; empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+
+  grid.innerHTML = filtered.map(s=>`
+    <div class="snip-card">
+      <div class="snip-top">
+        <div class="snip-title">${escapeHtml(s.title)}</div>
+        <div class="snip-tag">${escapeHtml(s.category||'uncategorized')}</div>
+      </div>
+      <div class="snip-cmd">${escapeHtml(s.command)}</div>
+      ${s.description ? `<div class="snip-desc">${escapeHtml(s.description)}</div>` : ''}
+      <div class="snip-actions">
+        <button class="copy" data-cmd="${encodeURIComponent(s.command)}">COPY</button>
+        <button class="edit" data-id="${s.id}">EDIT</button>
+        <button class="del" data-id="${s.id}">HAPUS</button>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.copy').forEach(b=>b.addEventListener('click', ()=>{
+    navigator.clipboard.writeText(decodeURIComponent(b.dataset.cmd));
+    b.textContent = 'COPIED!';
+    setTimeout(()=>b.textContent='COPY', 1200);
+  }));
+  grid.querySelectorAll('.edit').forEach(b=>b.addEventListener('click', ()=>openModal(b.dataset.id)));
+  grid.querySelectorAll('.del').forEach(b=>b.addEventListener('click', ()=>deleteSnippet(b.dataset.id)));
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+document.getElementById('searchInput').addEventListener('input', renderGrid);
+
+/* Modal */
+const modalOverlay = document.getElementById('modalOverlay');
+document.getElementById('openAddBtn').addEventListener('click', ()=>openModal(null));
+document.getElementById('cancelModal').addEventListener('click', closeModal);
+
+function openModal(id){
+  editingId = id;
+  const modalTitle = document.getElementById('modalTitle');
+  if(id){
+    const s = allSnippets.find(x=>x.id===id);
+    modalTitle.textContent = "EDIT SNIPPET";
+    document.getElementById('fTitle').value = s.title;
+    document.getElementById('fCommand').value = s.command;
+    document.getElementById('fDesc').value = s.description || '';
+    document.getElementById('fCategory').value = s.category || '';
+  } else {
+    modalTitle.textContent = "SNIPPET BARU";
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fCommand').value = '';
+    document.getElementById('fDesc').value = '';
+    document.getElementById('fCategory').value = '';
+  }
+  modalOverlay.style.display = 'flex';
+}
+function closeModal(){ modalOverlay.style.display = 'none'; }
+
+document.getElementById('saveModal').addEventListener('click', async ()=>{
+  const title = document.getElementById('fTitle').value.trim();
+  const command = document.getElementById('fCommand').value.trim();
+  const description = document.getElementById('fDesc').value.trim();
+  const category = document.getElementById('fCategory').value.trim() || 'uncategorized';
+
+  if(!title || !command){ alert('Judul & command wajib diisi.'); return; }
+
+  const { data: sessionData } = await sb.auth.getSession();
+  const user_id = sessionData.session.user.id;
+
+  if(editingId){
+    await sb.from('snippets').update({ title, command, description, category, updated_at: new Date().toISOString() }).eq('id', editingId);
+  } else {
+    await sb.from('snippets').insert({ title, command, description, category, user_id });
+  }
+  closeModal();
+  loadSnippets();
+});
+
+async function deleteSnippet(id){
+  if(!confirm('Yakin hapus snippet ini?')) return;
+  await sb.from('snippets').delete().eq('id', id);
+  loadSnippets();
+}
+</script>
+</body>
+</html>
